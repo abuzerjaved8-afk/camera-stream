@@ -31,9 +31,14 @@ app = Flask(__name__)
 # Camera handling
 # ----------------------------------------------------------------------
 def open_camera():
-    """Open the camera, trying a couple of backends for reliability."""
-    # CAP_DSHOW works best on Windows; fall back to default otherwise.
-    for backend in (cv2.CAP_DSHOW, cv2.CAP_ANY):
+    """Open the camera, picking the best backend for the current OS."""
+    if sys.platform.startswith("win"):
+        backends = (cv2.CAP_DSHOW, cv2.CAP_ANY)
+    else:
+        # V4L2 is reliable on Linux/RPi; GStreamer (CAP_ANY default) often fails
+        backends = (cv2.CAP_V4L2, cv2.CAP_ANY)
+
+    for backend in backends:
         cam = cv2.VideoCapture(CAMERA_INDEX, backend)
         if cam.isOpened():
             cam.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
