@@ -1,0 +1,12 @@
+[Unit]
+Description=Laptop Camera Live Stream
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/rpi/camera-stream/app.py
+WorkingDirectory=/home/rpi/camera-stream
+Restart=on-failure
+User=rpi
+
+[Install]
+WantedBy=multi-user.target
