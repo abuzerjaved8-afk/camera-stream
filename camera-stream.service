@@ -1,8 +1,10 @@
 [Unit]
 Description=Laptop Camera Live Stream
-After=network.target
+After=NetworkManager.service
+Wants=NetworkManager.service
 
 [Service]
+ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/python3 /home/rpi/camera-stream/app.py
 WorkingDirectory=/home/rpi/camera-stream
 Restart=on-failure
