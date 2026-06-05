@@ -88,10 +88,44 @@ def video():
 # ----------------------------------------------------------------------
 # Hotspot + networking helpers
 # ----------------------------------------------------------------------
+def _turn_on_hotspot_linux():
+    """Turn on a Wi-Fi hotspot on Linux/RPi using nmcli (NetworkManager)."""
+    try:
+        # Try to bring up an existing saved hotspot connection first
+        r = subprocess.run(
+            ["nmcli", "con", "up", "Hotspot"],
+            capture_output=True, text=True, timeout=20,
+        )
+        if r.returncode == 0:
+            print("[HOTSPOT] Existing hotspot connection activated")
+            return
+        # No saved hotspot — create one on wlan0
+        r2 = subprocess.run(
+            ["nmcli", "dev", "wifi", "hotspot",
+             "ifname", "wlan0",
+             "ssid", "CameraStream",
+             "password", "camerastream"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if r2.returncode == 0:
+            print("[HOTSPOT] Hotspot started  (SSID: CameraStream  Pass: camerastream)")
+        else:
+            print(f"[HOTSPOT] Could not start: {r2.stderr.strip() or r2.stdout.strip()}")
+            print("[HOTSPOT] You can enable it manually: sudo nmcli dev wifi hotspot ifname wlan0 ssid CameraStream password camerastream")
+    except FileNotFoundError:
+        print("[HOTSPOT] nmcli not found — enable the hotspot manually via the desktop or raspi-config.")
+    except Exception as e:
+        print(f"[HOTSPOT] Failed: {e}")
+
+
 def turn_on_hotspot():
-    """Attempt to turn on the Windows Mobile Hotspot via PowerShell."""
+    """Attempt to turn on the hotspot (Windows or Linux/RPi)."""
+    if sys.platform.startswith("linux"):
+        _turn_on_hotspot_linux()
+        return
+
     if not sys.platform.startswith("win"):
-        print("[INFO] Auto hotspot is Windows-only. Turn it on manually.")
+        print("[INFO] Auto hotspot not supported on this OS. Turn it on manually.")
         return
 
     ps_script = r'''
@@ -141,10 +175,24 @@ def get_local_ip():
 
 
 def get_hotspot_ip():
-    """
-    Find the Windows hotspot adapter IP (usually 192.168.137.1).
-    Returns None if not found.
-    """
+    """Return the hotspot adapter IP, or None if not found."""
+    if sys.platform.startswith("linux"):
+        # nmcli hotspot on RPi assigns 10.42.0.1 to the host
+        try:
+            out = subprocess.run(
+                ["ip", "-4", "addr", "show", "wlan0"],
+                capture_output=True, text=True, timeout=5,
+            ).stdout
+            for line in out.splitlines():
+                line = line.strip()
+                if line.startswith("inet "):
+                    ip = line.split()[1].split("/")[0]
+                    if ip.startswith("10.42."):
+                        return ip
+        except Exception:
+            pass
+        return None
+
     if not sys.platform.startswith("win"):
         return None
     try:
