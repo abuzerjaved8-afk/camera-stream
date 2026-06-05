@@ -10,7 +10,7 @@ echo ""
 # System packages (apt is more reliable than pip for opencv on RPi)
 echo "[1/3] Installing system dependencies..."
 sudo apt-get update -y -q
-sudo apt-get install -y -q python3-pip python3-opencv libatlas-base-dev
+sudo apt-get install -y -q python3-pip python3-opencv
 
 # Only Flask is needed from pip since opencv comes from apt above
 echo "[2/3] Installing Python packages..."
