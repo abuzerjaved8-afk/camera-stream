@@ -8,7 +8,7 @@ ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/python3 /home/rpi/camera-stream/app.py
 WorkingDirectory=/home/rpi/camera-stream
 Restart=on-failure
-User=rpi
+User=root
 
 [Install]
 WantedBy=multi-user.target
